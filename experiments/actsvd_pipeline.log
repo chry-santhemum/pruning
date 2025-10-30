@@ -1,0 +1,592 @@
+==========================================
+ActSVD Grid Search Pipeline
+Started: Thu Oct 23 12:21:53 UTC 2025
+==========================================
+
+[STEP 1/4] Generating rank pairs...
+------------------------------------------------
+============================================================
+ActSVD Rank Pair Generator
+============================================================
+
+Configuration:
+  Min rank: 50
+  Max rank: 4000
+  Number of points: 30
+  Spacing: Log-spaced (denser at lower ranks)
+
+Generating log-spaced rank values...
+✓ Generated 30 rank values
+
+Rank distribution:
+  First 10: [50, 58, 68, 79, 92, 106, 124, 144, 167, 195]
+  Middle 10: [227, 264, 307, 357, 415, 482, 561, 652, 759, 883]
+  Last 10: [1027, 1194, 1389, 1616, 1879, 2186, 2542, 2957, 3439, 4000]
+
+Generating diagonal (r_u = r_s) pairs...
+✓ Generated 30 pairs
+
+First 5 pairs:
+  1. r_u=  50, r_s=  50
+  2. r_u=  58, r_s=  58
+  3. r_u=  68, r_s=  68
+  4. r_u=  79, r_s=  79
+  5. r_u=  92, r_s=  92
+
+Last 5 pairs:
+  26. r_u=2186, r_s=2186
+  27. r_u=2542, r_s=2542
+  28. r_u=2957, r_s=2957
+  29. r_u=3439, r_s=3439
+  30. r_u=4000, r_s=4000
+
+============================================================
+✓ Rank pairs saved!
+============================================================
+
+Output file: /workspace/projects/2881r-mini-project/experiments/actsvd/rank_pairs.json
+Total pairs: 30
+
+Next step: Run sweep experiments
+  bash experiments/actsvd/run_actsvd_sweep.sh
+
+
+✓ Rank pairs generated
+
+[STEP 2/4] Running ActSVD sweep experiments (30 total)...
+------------------------------------------------
+==========================================
+ActSVD Grid Search - Batch Experiment Runner
+==========================================
+
+Activating virtual environment...
+Using Python: /workspace/projects/2881r-mini-project/.venv/bin/python
+
+Loading rank pairs from: experiments/actsvd/rank_pairs.json
+
+Total experiments to run: 30
+
+Starting ActSVD sweep experiments...
+
+==========================================
+Experiment 1/30: r_u=50, r_s=50
+Save directory: out/experiments/actsvd_sweep/ru_0050_rs_0050
+==========================================
+  Results already exist, skipping...
+
+==========================================
+Experiment 2/30: r_u=58, r_s=58
+Save directory: out/experiments/actsvd_sweep/ru_0058_rs_0058
+==========================================
+============================================================
+ActSVD Experiment: r_u=58, r_s=58
+============================================================
+
+Configuration:
+  Model: llama2-7b-chat-hf
+  Utility rank (r_u): 58
+  Safety rank (r_s): 58
+  Utility dataset: alpaca_cleaned_no_safety
+  Safety dataset: align
+  Save directory: /workspace/projects/2881r-mini-project/out/experiments/actsvd_sweep/ru_0058_rs_0058
+
+Running command:
+python /workspace/projects/2881r-mini-project/main_low_rank_diff.py --model llama2-7b-chat-hf --rank_pos 58 --rank_neg 58 --prune_data_pos alpaca_cleaned_no_safety --prune_data_neg align --save /workspace/projects/2881r-mini-project/out/experiments/actsvd_sweep/ru_0058_rs_0058 --eval_zero_shot --eval_attack
+
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:56<00:56, 56.19s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:15<00:00, 34.27s/it]Loading checkpoint shards: 100%|██████████| 2/2 [01:15<00:00, 37.56s/it]
+loading calibdation data alpaca_cleaned_no_safety, align
+dataset loading complete
+making low rank:  model.layers.0.self_attn.q_proj
+making low rank:  model.layers.0.self_attn.k_proj
+making low rank:  model.layers.0.self_attn.v_proj
+making low rank:  model.layers.0.self_attn.o_proj
+making low rank:  model.layers.0.mlp.gate_proj
+making low rank:  model.layers.0.mlp.up_proj
+making low rank:  model.layers.0.mlp.down_proj
+14.220182418823242
+making low rank:  model.layers.1.self_attn.q_proj
+making low rank:  model.layers.1.self_attn.k_proj
+making low rank:  model.layers.1.self_attn.v_proj
+making low rank:  model.layers.1.self_attn.o_proj
+making low rank:  model.layers.1.mlp.gate_proj
+making low rank:  model.layers.1.mlp.up_proj
+making low rank:  model.layers.1.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.2.self_attn.q_proj
+making low rank:  model.layers.2.self_attn.k_proj
+making low rank:  model.layers.2.self_attn.v_proj
+making low rank:  model.layers.2.self_attn.o_proj
+making low rank:  model.layers.2.mlp.gate_proj
+making low rank:  model.layers.2.mlp.up_proj
+making low rank:  model.layers.2.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.3.self_attn.q_proj
+making low rank:  model.layers.3.self_attn.k_proj
+making low rank:  model.layers.3.self_attn.v_proj
+making low rank:  model.layers.3.self_attn.o_proj
+making low rank:  model.layers.3.mlp.gate_proj
+making low rank:  model.layers.3.mlp.up_proj
+making low rank:  model.layers.3.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.4.self_attn.q_proj
+making low rank:  model.layers.4.self_attn.k_proj
+making low rank:  model.layers.4.self_attn.v_proj
+making low rank:  model.layers.4.self_attn.o_proj
+making low rank:  model.layers.4.mlp.gate_proj
+making low rank:  model.layers.4.mlp.up_proj
+making low rank:  model.layers.4.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.5.self_attn.q_proj
+making low rank:  model.layers.5.self_attn.k_proj
+making low rank:  model.layers.5.self_attn.v_proj
+making low rank:  model.layers.5.self_attn.o_proj
+making low rank:  model.layers.5.mlp.gate_proj
+making low rank:  model.layers.5.mlp.up_proj
+making low rank:  model.layers.5.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.6.self_attn.q_proj
+making low rank:  model.layers.6.self_attn.k_proj
+making low rank:  model.layers.6.self_attn.v_proj
+making low rank:  model.layers.6.self_attn.o_proj
+making low rank:  model.layers.6.mlp.gate_proj
+making low rank:  model.layers.6.mlp.up_proj
+making low rank:  model.layers.6.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.7.self_attn.q_proj
+making low rank:  model.layers.7.self_attn.k_proj
+making low rank:  model.layers.7.self_attn.v_proj
+making low rank:  model.layers.7.self_attn.o_proj
+making low rank:  model.layers.7.mlp.gate_proj
+making low rank:  model.layers.7.mlp.up_proj
+making low rank:  model.layers.7.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.8.self_attn.q_proj
+making low rank:  model.layers.8.self_attn.k_proj
+making low rank:  model.layers.8.self_attn.v_proj
+making low rank:  model.layers.8.self_attn.o_proj
+making low rank:  model.layers.8.mlp.gate_proj
+making low rank:  model.layers.8.mlp.up_proj
+making low rank:  model.layers.8.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.9.self_attn.q_proj
+making low rank:  model.layers.9.self_attn.k_proj
+making low rank:  model.layers.9.self_attn.v_proj
+making low rank:  model.layers.9.self_attn.o_proj
+making low rank:  model.layers.9.mlp.gate_proj
+making low rank:  model.layers.9.mlp.up_proj
+making low rank:  model.layers.9.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.10.self_attn.q_proj
+making low rank:  model.layers.10.self_attn.k_proj
+making low rank:  model.layers.10.self_attn.v_proj
+making low rank:  model.layers.10.self_attn.o_proj
+making low rank:  model.layers.10.mlp.gate_proj
+making low rank:  model.layers.10.mlp.up_proj
+making low rank:  model.layers.10.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.11.self_attn.q_proj
+making low rank:  model.layers.11.self_attn.k_proj
+making low rank:  model.layers.11.self_attn.v_proj
+making low rank:  model.layers.11.self_attn.o_proj
+making low rank:  model.layers.11.mlp.gate_proj
+making low rank:  model.layers.11.mlp.up_proj
+making low rank:  model.layers.11.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.12.self_attn.q_proj
+making low rank:  model.layers.12.self_attn.k_proj
+making low rank:  model.layers.12.self_attn.v_proj
+making low rank:  model.layers.12.self_attn.o_proj
+making low rank:  model.layers.12.mlp.gate_proj
+making low rank:  model.layers.12.mlp.up_proj
+making low rank:  model.layers.12.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.13.self_attn.q_proj
+making low rank:  model.layers.13.self_attn.k_proj
+making low rank:  model.layers.13.self_attn.v_proj
+making low rank:  model.layers.13.self_attn.o_proj
+making low rank:  model.layers.13.mlp.gate_proj
+making low rank:  model.layers.13.mlp.up_proj
+making low rank:  model.layers.13.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.14.self_attn.q_proj
+making low rank:  model.layers.14.self_attn.k_proj
+making low rank:  model.layers.14.self_attn.v_proj
+making low rank:  model.layers.14.self_attn.o_proj
+making low rank:  model.layers.14.mlp.gate_proj
+making low rank:  model.layers.14.mlp.up_proj
+making low rank:  model.layers.14.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.15.self_attn.q_proj
+making low rank:  model.layers.15.self_attn.k_proj
+making low rank:  model.layers.15.self_attn.v_proj
+making low rank:  model.layers.15.self_attn.o_proj
+making low rank:  model.layers.15.mlp.gate_proj
+making low rank:  model.layers.15.mlp.up_proj
+making low rank:  model.layers.15.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.16.self_attn.q_proj
+making low rank:  model.layers.16.self_attn.k_proj
+making low rank:  model.layers.16.self_attn.v_proj
+making low rank:  model.layers.16.self_attn.o_proj
+making low rank:  model.layers.16.mlp.gate_proj
+making low rank:  model.layers.16.mlp.up_proj
+making low rank:  model.layers.16.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.17.self_attn.q_proj
+making low rank:  model.layers.17.self_attn.k_proj
+making low rank:  model.layers.17.self_attn.v_proj
+making low rank:  model.layers.17.self_attn.o_proj
+making low rank:  model.layers.17.mlp.gate_proj
+making low rank:  model.layers.17.mlp.up_proj
+making low rank:  model.layers.17.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.18.self_attn.q_proj
+making low rank:  model.layers.18.self_attn.k_proj
+making low rank:  model.layers.18.self_attn.v_proj
+making low rank:  model.layers.18.self_attn.o_proj
+making low rank:  model.layers.18.mlp.gate_proj
+making low rank:  model.layers.18.mlp.up_proj
+making low rank:  model.layers.18.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.19.self_attn.q_proj
+making low rank:  model.layers.19.self_attn.k_proj
+making low rank:  model.layers.19.self_attn.v_proj
+making low rank:  model.layers.19.self_attn.o_proj
+making low rank:  model.layers.19.mlp.gate_proj
+making low rank:  model.layers.19.mlp.up_proj
+making low rank:  model.layers.19.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.20.self_attn.q_proj
+making low rank:  model.layers.20.self_attn.k_proj
+making low rank:  model.layers.20.self_attn.v_proj
+making low rank:  model.layers.20.self_attn.o_proj
+making low rank:  model.layers.20.mlp.gate_proj
+making low rank:  model.layers.20.mlp.up_proj
+making low rank:  model.layers.20.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.21.self_attn.q_proj
+making low rank:  model.layers.21.self_attn.k_proj
+making low rank:  model.layers.21.self_attn.v_proj
+making low rank:  model.layers.21.self_attn.o_proj
+making low rank:  model.layers.21.mlp.gate_proj
+making low rank:  model.layers.21.mlp.up_proj
+making low rank:  model.layers.21.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.22.self_attn.q_proj
+making low rank:  model.layers.22.self_attn.k_proj
+making low rank:  model.layers.22.self_attn.v_proj
+making low rank:  model.layers.22.self_attn.o_proj
+making low rank:  model.layers.22.mlp.gate_proj
+making low rank:  model.layers.22.mlp.up_proj
+making low rank:  model.layers.22.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.23.self_attn.q_proj
+making low rank:  model.layers.23.self_attn.k_proj
+making low rank:  model.layers.23.self_attn.v_proj
+making low rank:  model.layers.23.self_attn.o_proj
+making low rank:  model.layers.23.mlp.gate_proj
+making low rank:  model.layers.23.mlp.up_proj
+making low rank:  model.layers.23.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.24.self_attn.q_proj
+making low rank:  model.layers.24.self_attn.k_proj
+making low rank:  model.layers.24.self_attn.v_proj
+making low rank:  model.layers.24.self_attn.o_proj
+making low rank:  model.layers.24.mlp.gate_proj
+making low rank:  model.layers.24.mlp.up_proj
+making low rank:  model.layers.24.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.25.self_attn.q_proj
+making low rank:  model.layers.25.self_attn.k_proj
+making low rank:  model.layers.25.self_attn.v_proj
+making low rank:  model.layers.25.self_attn.o_proj
+making low rank:  model.layers.25.mlp.gate_proj
+making low rank:  model.layers.25.mlp.up_proj
+making low rank:  model.layers.25.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.26.self_attn.q_proj
+making low rank:  model.layers.26.self_attn.k_proj
+making low rank:  model.layers.26.self_attn.v_proj
+making low rank:  model.layers.26.self_attn.o_proj
+making low rank:  model.layers.26.mlp.gate_proj
+making low rank:  model.layers.26.mlp.up_proj
+making low rank:  model.layers.26.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.27.self_attn.q_proj
+making low rank:  model.layers.27.self_attn.k_proj
+making low rank:  model.layers.27.self_attn.v_proj
+making low rank:  model.layers.27.self_attn.o_proj
+making low rank:  model.layers.27.mlp.gate_proj
+making low rank:  model.layers.27.mlp.up_proj
+making low rank:  model.layers.27.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.28.self_attn.q_proj
+making low rank:  model.layers.28.self_attn.k_proj
+making low rank:  model.layers.28.self_attn.v_proj
+making low rank:  model.layers.28.self_attn.o_proj
+making low rank:  model.layers.28.mlp.gate_proj
+making low rank:  model.layers.28.mlp.up_proj
+making low rank:  model.layers.28.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.29.self_attn.q_proj
+making low rank:  model.layers.29.self_attn.k_proj
+making low rank:  model.layers.29.self_attn.v_proj
+making low rank:  model.layers.29.self_attn.o_proj
+making low rank:  model.layers.29.mlp.gate_proj
+making low rank:  model.layers.29.mlp.up_proj
+making low rank:  model.layers.29.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.30.self_attn.q_proj
+making low rank:  model.layers.30.self_attn.k_proj
+making low rank:  model.layers.30.self_attn.v_proj
+making low rank:  model.layers.30.self_attn.o_proj
+making low rank:  model.layers.30.mlp.gate_proj
+making low rank:  model.layers.30.mlp.up_proj
+making low rank:  model.layers.30.mlp.down_proj
+14.220094680786133
+making low rank:  model.layers.31.self_attn.q_proj
+making low rank:  model.layers.31.self_attn.k_proj
+making low rank:  model.layers.31.self_attn.v_proj
+making low rank:  model.layers.31.self_attn.o_proj
+making low rank:  model.layers.31.mlp.gate_proj
+making low rank:  model.layers.31.mlp.up_proj
+making low rank:  model.layers.31.mlp.down_proj
+14.220094680786133
+Reverting model.layers.0.self_attn.q_proj, parent: model.layers.0.self_attn
+Reverting model.layers.0.self_attn.k_proj, parent: model.layers.0.self_attn
+Reverting model.layers.0.self_attn.v_proj, parent: model.layers.0.self_attn
+Reverting model.layers.0.self_attn.o_proj, parent: model.layers.0.self_attn
+Reverting model.layers.0.mlp.gate_proj, parent: model.layers.0.mlp
+Reverting model.layers.0.mlp.up_proj, parent: model.layers.0.mlp
+Reverting model.layers.0.mlp.down_proj, parent: model.layers.0.mlp
+Reverting model.layers.1.self_attn.q_proj, parent: model.layers.1.self_attn
+Reverting model.layers.1.self_attn.k_proj, parent: model.layers.1.self_attn
+Reverting model.layers.1.self_attn.v_proj, parent: model.layers.1.self_attn
+Reverting model.layers.1.self_attn.o_proj, parent: model.layers.1.self_attn
+Reverting model.layers.1.mlp.gate_proj, parent: model.layers.1.mlp
+Reverting model.layers.1.mlp.up_proj, parent: model.layers.1.mlp
+Reverting model.layers.1.mlp.down_proj, parent: model.layers.1.mlp
+Reverting model.layers.2.self_attn.q_proj, parent: model.layers.2.self_attn
+Reverting model.layers.2.self_attn.k_proj, parent: model.layers.2.self_attn
+Reverting model.layers.2.self_attn.v_proj, parent: model.layers.2.self_attn
+Reverting model.layers.2.self_attn.o_proj, parent: model.layers.2.self_attn
+Reverting model.layers.2.mlp.gate_proj, parent: model.layers.2.mlp
+Reverting model.layers.2.mlp.up_proj, parent: model.layers.2.mlp
+Reverting model.layers.2.mlp.down_proj, parent: model.layers.2.mlp
+Reverting model.layers.3.self_attn.q_proj, parent: model.layers.3.self_attn
+Reverting model.layers.3.self_attn.k_proj, parent: model.layers.3.self_attn
+Reverting model.layers.3.self_attn.v_proj, parent: model.layers.3.self_attn
+Reverting model.layers.3.self_attn.o_proj, parent: model.layers.3.self_attn
+Reverting model.layers.3.mlp.gate_proj, parent: model.layers.3.mlp
+Reverting model.layers.3.mlp.up_proj, parent: model.layers.3.mlp
+Reverting model.layers.3.mlp.down_proj, parent: model.layers.3.mlp
+Reverting model.layers.4.self_attn.q_proj, parent: model.layers.4.self_attn
+Reverting model.layers.4.self_attn.k_proj, parent: model.layers.4.self_attn
+Reverting model.layers.4.self_attn.v_proj, parent: model.layers.4.self_attn
+Reverting model.layers.4.self_attn.o_proj, parent: model.layers.4.self_attn
+Reverting model.layers.4.mlp.gate_proj, parent: model.layers.4.mlp
+Reverting model.layers.4.mlp.up_proj, parent: model.layers.4.mlp
+Reverting model.layers.4.mlp.down_proj, parent: model.layers.4.mlp
+Reverting model.layers.5.self_attn.q_proj, parent: model.layers.5.self_attn
+Reverting model.layers.5.self_attn.k_proj, parent: model.layers.5.self_attn
+Reverting model.layers.5.self_attn.v_proj, parent: model.layers.5.self_attn
+Reverting model.layers.5.self_attn.o_proj, parent: model.layers.5.self_attn
+Reverting model.layers.5.mlp.gate_proj, parent: model.layers.5.mlp
+Reverting model.layers.5.mlp.up_proj, parent: model.layers.5.mlp
+Reverting model.layers.5.mlp.down_proj, parent: model.layers.5.mlp
+Reverting model.layers.6.self_attn.q_proj, parent: model.layers.6.self_attn
+Reverting model.layers.6.self_attn.k_proj, parent: model.layers.6.self_attn
+Reverting model.layers.6.self_attn.v_proj, parent: model.layers.6.self_attn
+Reverting model.layers.6.self_attn.o_proj, parent: model.layers.6.self_attn
+Reverting model.layers.6.mlp.gate_proj, parent: model.layers.6.mlp
+Reverting model.layers.6.mlp.up_proj, parent: model.layers.6.mlp
+Reverting model.layers.6.mlp.down_proj, parent: model.layers.6.mlp
+Reverting model.layers.7.self_attn.q_proj, parent: model.layers.7.self_attn
+Reverting model.layers.7.self_attn.k_proj, parent: model.layers.7.self_attn
+Reverting model.layers.7.self_attn.v_proj, parent: model.layers.7.self_attn
+Reverting model.layers.7.self_attn.o_proj, parent: model.layers.7.self_attn
+Reverting model.layers.7.mlp.gate_proj, parent: model.layers.7.mlp
+Reverting model.layers.7.mlp.up_proj, parent: model.layers.7.mlp
+Reverting model.layers.7.mlp.down_proj, parent: model.layers.7.mlp
+Reverting model.layers.8.self_attn.q_proj, parent: model.layers.8.self_attn
+Reverting model.layers.8.self_attn.k_proj, parent: model.layers.8.self_attn
+Reverting model.layers.8.self_attn.v_proj, parent: model.layers.8.self_attn
+Reverting model.layers.8.self_attn.o_proj, parent: model.layers.8.self_attn
+Reverting model.layers.8.mlp.gate_proj, parent: model.layers.8.mlp
+Reverting model.layers.8.mlp.up_proj, parent: model.layers.8.mlp
+Reverting model.layers.8.mlp.down_proj, parent: model.layers.8.mlp
+Reverting model.layers.9.self_attn.q_proj, parent: model.layers.9.self_attn
+Reverting model.layers.9.self_attn.k_proj, parent: model.layers.9.self_attn
+Reverting model.layers.9.self_attn.v_proj, parent: model.layers.9.self_attn
+Reverting model.layers.9.self_attn.o_proj, parent: model.layers.9.self_attn
+Reverting model.layers.9.mlp.gate_proj, parent: model.layers.9.mlp
+Reverting model.layers.9.mlp.up_proj, parent: model.layers.9.mlp
+Reverting model.layers.9.mlp.down_proj, parent: model.layers.9.mlp
+Reverting model.layers.10.self_attn.q_proj, parent: model.layers.10.self_attn
+Reverting model.layers.10.self_attn.k_proj, parent: model.layers.10.self_attn
+Reverting model.layers.10.self_attn.v_proj, parent: model.layers.10.self_attn
+Reverting model.layers.10.self_attn.o_proj, parent: model.layers.10.self_attn
+Reverting model.layers.10.mlp.gate_proj, parent: model.layers.10.mlp
+Reverting model.layers.10.mlp.up_proj, parent: model.layers.10.mlp
+Reverting model.layers.10.mlp.down_proj, parent: model.layers.10.mlp
+Reverting model.layers.11.self_attn.q_proj, parent: model.layers.11.self_attn
+Reverting model.layers.11.self_attn.k_proj, parent: model.layers.11.self_attn
+Reverting model.layers.11.self_attn.v_proj, parent: model.layers.11.self_attn
+Reverting model.layers.11.self_attn.o_proj, parent: model.layers.11.self_attn
+Reverting model.layers.11.mlp.gate_proj, parent: model.layers.11.mlp
+Reverting model.layers.11.mlp.up_proj, parent: model.layers.11.mlp
+Reverting model.layers.11.mlp.down_proj, parent: model.layers.11.mlp
+Reverting model.layers.12.self_attn.q_proj, parent: model.layers.12.self_attn
+Reverting model.layers.12.self_attn.k_proj, parent: model.layers.12.self_attn
+Reverting model.layers.12.self_attn.v_proj, parent: model.layers.12.self_attn
+Reverting model.layers.12.self_attn.o_proj, parent: model.layers.12.self_attn
+Reverting model.layers.12.mlp.gate_proj, parent: model.layers.12.mlp
+Reverting model.layers.12.mlp.up_proj, parent: model.layers.12.mlp
+Reverting model.layers.12.mlp.down_proj, parent: model.layers.12.mlp
+Reverting model.layers.13.self_attn.q_proj, parent: model.layers.13.self_attn
+Reverting model.layers.13.self_attn.k_proj, parent: model.layers.13.self_attn
+Reverting model.layers.13.self_attn.v_proj, parent: model.layers.13.self_attn
+Reverting model.layers.13.self_attn.o_proj, parent: model.layers.13.self_attn
+Reverting model.layers.13.mlp.gate_proj, parent: model.layers.13.mlp
+Reverting model.layers.13.mlp.up_proj, parent: model.layers.13.mlp
+Reverting model.layers.13.mlp.down_proj, parent: model.layers.13.mlp
+Reverting model.layers.14.self_attn.q_proj, parent: model.layers.14.self_attn
+Reverting model.layers.14.self_attn.k_proj, parent: model.layers.14.self_attn
+Reverting model.layers.14.self_attn.v_proj, parent: model.layers.14.self_attn
+Reverting model.layers.14.self_attn.o_proj, parent: model.layers.14.self_attn
+Reverting model.layers.14.mlp.gate_proj, parent: model.layers.14.mlp
+Reverting model.layers.14.mlp.up_proj, parent: model.layers.14.mlp
+Reverting model.layers.14.mlp.down_proj, parent: model.layers.14.mlp
+Reverting model.layers.15.self_attn.q_proj, parent: model.layers.15.self_attn
+Reverting model.layers.15.self_attn.k_proj, parent: model.layers.15.self_attn
+Reverting model.layers.15.self_attn.v_proj, parent: model.layers.15.self_attn
+Reverting model.layers.15.self_attn.o_proj, parent: model.layers.15.self_attn
+Reverting model.layers.15.mlp.gate_proj, parent: model.layers.15.mlp
+Reverting model.layers.15.mlp.up_proj, parent: model.layers.15.mlp
+Reverting model.layers.15.mlp.down_proj, parent: model.layers.15.mlp
+Reverting model.layers.16.self_attn.q_proj, parent: model.layers.16.self_attn
+Reverting model.layers.16.self_attn.k_proj, parent: model.layers.16.self_attn
+Reverting model.layers.16.self_attn.v_proj, parent: model.layers.16.self_attn
+Reverting model.layers.16.self_attn.o_proj, parent: model.layers.16.self_attn
+Reverting model.layers.16.mlp.gate_proj, parent: model.layers.16.mlp
+Reverting model.layers.16.mlp.up_proj, parent: model.layers.16.mlp
+Reverting model.layers.16.mlp.down_proj, parent: model.layers.16.mlp
+Reverting model.layers.17.self_attn.q_proj, parent: model.layers.17.self_attn
+Reverting model.layers.17.self_attn.k_proj, parent: model.layers.17.self_attn
+Reverting model.layers.17.self_attn.v_proj, parent: model.layers.17.self_attn
+Reverting model.layers.17.self_attn.o_proj, parent: model.layers.17.self_attn
+Reverting model.layers.17.mlp.gate_proj, parent: model.layers.17.mlp
+Reverting model.layers.17.mlp.up_proj, parent: model.layers.17.mlp
+Reverting model.layers.17.mlp.down_proj, parent: model.layers.17.mlp
+Reverting model.layers.18.self_attn.q_proj, parent: model.layers.18.self_attn
+Reverting model.layers.18.self_attn.k_proj, parent: model.layers.18.self_attn
+Reverting model.layers.18.self_attn.v_proj, parent: model.layers.18.self_attn
+Reverting model.layers.18.self_attn.o_proj, parent: model.layers.18.self_attn
+Reverting model.layers.18.mlp.gate_proj, parent: model.layers.18.mlp
+Reverting model.layers.18.mlp.up_proj, parent: model.layers.18.mlp
+Reverting model.layers.18.mlp.down_proj, parent: model.layers.18.mlp
+Reverting model.layers.19.self_attn.q_proj, parent: model.layers.19.self_attn
+Reverting model.layers.19.self_attn.k_proj, parent: model.layers.19.self_attn
+Reverting model.layers.19.self_attn.v_proj, parent: model.layers.19.self_attn
+Reverting model.layers.19.self_attn.o_proj, parent: model.layers.19.self_attn
+Reverting model.layers.19.mlp.gate_proj, parent: model.layers.19.mlp
+Reverting model.layers.19.mlp.up_proj, parent: model.layers.19.mlp
+Reverting model.layers.19.mlp.down_proj, parent: model.layers.19.mlp
+Reverting model.layers.20.self_attn.q_proj, parent: model.layers.20.self_attn
+Reverting model.layers.20.self_attn.k_proj, parent: model.layers.20.self_attn
+Reverting model.layers.20.self_attn.v_proj, parent: model.layers.20.self_attn
+Reverting model.layers.20.self_attn.o_proj, parent: model.layers.20.self_attn
+Reverting model.layers.20.mlp.gate_proj, parent: model.layers.20.mlp
+Reverting model.layers.20.mlp.up_proj, parent: model.layers.20.mlp
+Reverting model.layers.20.mlp.down_proj, parent: model.layers.20.mlp
+Reverting model.layers.21.self_attn.q_proj, parent: model.layers.21.self_attn
+Reverting model.layers.21.self_attn.k_proj, parent: model.layers.21.self_attn
+Reverting model.layers.21.self_attn.v_proj, parent: model.layers.21.self_attn
+Reverting model.layers.21.self_attn.o_proj, parent: model.layers.21.self_attn
+Reverting model.layers.21.mlp.gate_proj, parent: model.layers.21.mlp
+Reverting model.layers.21.mlp.up_proj, parent: model.layers.21.mlp
+Reverting model.layers.21.mlp.down_proj, parent: model.layers.21.mlp
+Reverting model.layers.22.self_attn.q_proj, parent: model.layers.22.self_attn
+Reverting model.layers.22.self_attn.k_proj, parent: model.layers.22.self_attn
+Reverting model.layers.22.self_attn.v_proj, parent: model.layers.22.self_attn
+Reverting model.layers.22.self_attn.o_proj, parent: model.layers.22.self_attn
+Reverting model.layers.22.mlp.gate_proj, parent: model.layers.22.mlp
+Reverting model.layers.22.mlp.up_proj, parent: model.layers.22.mlp
+Reverting model.layers.22.mlp.down_proj, parent: model.layers.22.mlp
+Reverting model.layers.23.self_attn.q_proj, parent: model.layers.23.self_attn
+Reverting model.layers.23.self_attn.k_proj, parent: model.layers.23.self_attn
+Reverting model.layers.23.self_attn.v_proj, parent: model.layers.23.self_attn
+Reverting model.layers.23.self_attn.o_proj, parent: model.layers.23.self_attn
+Reverting model.layers.23.mlp.gate_proj, parent: model.layers.23.mlp
+Reverting model.layers.23.mlp.up_proj, parent: model.layers.23.mlp
+Reverting model.layers.23.mlp.down_proj, parent: model.layers.23.mlp
+Reverting model.layers.24.self_attn.q_proj, parent: model.layers.24.self_attn
+Reverting model.layers.24.self_attn.k_proj, parent: model.layers.24.self_attn
+Reverting model.layers.24.self_attn.v_proj, parent: model.layers.24.self_attn
+Reverting model.layers.24.self_attn.o_proj, parent: model.layers.24.self_attn
+Reverting model.layers.24.mlp.gate_proj, parent: model.layers.24.mlp
+Reverting model.layers.24.mlp.up_proj, parent: model.layers.24.mlp
+Reverting model.layers.24.mlp.down_proj, parent: model.layers.24.mlp
+Reverting model.layers.25.self_attn.q_proj, parent: model.layers.25.self_attn
+Reverting model.layers.25.self_attn.k_proj, parent: model.layers.25.self_attn
+Reverting model.layers.25.self_attn.v_proj, parent: model.layers.25.self_attn
+Reverting model.layers.25.self_attn.o_proj, parent: model.layers.25.self_attn
+Reverting model.layers.25.mlp.gate_proj, parent: model.layers.25.mlp
+Reverting model.layers.25.mlp.up_proj, parent: model.layers.25.mlp
+Reverting model.layers.25.mlp.down_proj, parent: model.layers.25.mlp
+Reverting model.layers.26.self_attn.q_proj, parent: model.layers.26.self_attn
+Reverting model.layers.26.self_attn.k_proj, parent: model.layers.26.self_attn
+Reverting model.layers.26.self_attn.v_proj, parent: model.layers.26.self_attn
+Reverting model.layers.26.self_attn.o_proj, parent: model.layers.26.self_attn
+Reverting model.layers.26.mlp.gate_proj, parent: model.layers.26.mlp
+Reverting model.layers.26.mlp.up_proj, parent: model.layers.26.mlp
+Reverting model.layers.26.mlp.down_proj, parent: model.layers.26.mlp
+Reverting model.layers.27.self_attn.q_proj, parent: model.layers.27.self_attn
+Reverting model.layers.27.self_attn.k_proj, parent: model.layers.27.self_attn
+Reverting model.layers.27.self_attn.v_proj, parent: model.layers.27.self_attn
+Reverting model.layers.27.self_attn.o_proj, parent: model.layers.27.self_attn
+Reverting model.layers.27.mlp.gate_proj, parent: model.layers.27.mlp
+Reverting model.layers.27.mlp.up_proj, parent: model.layers.27.mlp
+Reverting model.layers.27.mlp.down_proj, parent: model.layers.27.mlp
+Reverting model.layers.28.self_attn.q_proj, parent: model.layers.28.self_attn
+Reverting model.layers.28.self_attn.k_proj, parent: model.layers.28.self_attn
+Reverting model.layers.28.self_attn.v_proj, parent: model.layers.28.self_attn
+Reverting model.layers.28.self_attn.o_proj, parent: model.layers.28.self_attn
+Reverting model.layers.28.mlp.gate_proj, parent: model.layers.28.mlp
+Reverting model.layers.28.mlp.up_proj, parent: model.layers.28.mlp
+Reverting model.layers.28.mlp.down_proj, parent: model.layers.28.mlp
+Reverting model.layers.29.self_attn.q_proj, parent: model.layers.29.self_attn
+Reverting model.layers.29.self_attn.k_proj, parent: model.layers.29.self_attn
+Reverting model.layers.29.self_attn.v_proj, parent: model.layers.29.self_attn
+Reverting model.layers.29.self_attn.o_proj, parent: model.layers.29.self_attn
+Reverting model.layers.29.mlp.gate_proj, parent: model.layers.29.mlp
+Reverting model.layers.29.mlp.up_proj, parent: model.layers.29.mlp
+Reverting model.layers.29.mlp.down_proj, parent: model.layers.29.mlp
+Reverting model.layers.30.self_attn.q_proj, parent: model.layers.30.self_attn
+Reverting model.layers.30.self_attn.k_proj, parent: model.layers.30.self_attn
+Reverting model.layers.30.self_attn.v_proj, parent: model.layers.30.self_attn
+Reverting model.layers.30.self_attn.o_proj, parent: model.layers.30.self_attn
+Reverting model.layers.30.mlp.gate_proj, parent: model.layers.30.mlp
+Reverting model.layers.30.mlp.up_proj, parent: model.layers.30.mlp
+Reverting model.layers.30.mlp.down_proj, parent: model.layers.30.mlp
+Reverting model.layers.31.self_attn.q_proj, parent: model.layers.31.self_attn
+Reverting model.layers.31.self_attn.k_proj, parent: model.layers.31.self_attn
+Reverting model.layers.31.self_attn.v_proj, parent: model.layers.31.self_attn
+Reverting model.layers.31.self_attn.o_proj, parent: model.layers.31.self_attn
+Reverting model.layers.31.mlp.gate_proj, parent: model.layers.31.mlp
+Reverting model.layers.31.mlp.up_proj, parent: model.layers.31.mlp
+Reverting model.layers.31.mlp.down_proj, parent: model.layers.31.mlp
+evaluating on wikitext
+nsamples 83
+sample 0
+sample 50
+wikitext perplexity 6.505592346191406
+INFO 10-23 15:31:04 llm_engine.py:72] Initializing an LLM engine with config: model='temp/_vllm_tmp', tokenizer='meta-llama/Llama-2-7b-chat-hf', tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=4096, download_dir=None, load_format=auto, tensor_parallel_size=1, quantization=None, seed=0)
+INFO 10-23 15:31:04 tokenizer.py:31] For some LLaMA V1 models, initializing the fast tokenizer may take a long time. To reduce the initialization time, consider using 'hf-internal-testing/llama-tokenizer' instead of the original tokenizer.
+INFO 10-23 15:31:11 llm_engine.py:207] # GPU blocks: 7457, # CPU blocks: 16384
+
+============================================================
+✗ Experiment failed: r_u=58, r_s=58
+  Exit code: -9
+============================================================
+
