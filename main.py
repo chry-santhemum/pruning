@@ -36,6 +36,8 @@ modeltype2path = {
     "llama2-13b-chat-hf": "meta-llama/Llama-2-13b-chat-hf",
     "llama2-7b-hf": "meta-llama/Llama-2-7b-hf",
     "llama2-13b-hf": "meta-llama/Llama-2-13b-hf",
+    "llama3-8b-hf": "unsloth/Meta-Llama-3.1-8B",
+    "llama3-8b-chat-hf": "unsloth/Meta-Llama-3.1-8B-Instruct",
 }
 
 
@@ -45,6 +47,8 @@ def get_llm(model_name, cache_dir="llm_weights"):
         "llama2-13b-chat-hf",
         "llama2-7b-hf",
         "llama2-13b-hf",
+        "llama3-8b-hf",
+        "llama3-8b-chat-hf",
     ]:
         model = AutoModelForCausalLM.from_pretrained(
             modeltype2path[model_name],
@@ -213,7 +217,8 @@ def main():
     model = get_llm(args.model, args.cache_dir)
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(
-        modeltype2path[args.model], use_fast=False
+        # modeltype2path[args.model], use_fast=False
+        modeltype2path[args.model]
     )
 
     if (args.decouple_align_misalign or args.decouple_align_utility) and (
