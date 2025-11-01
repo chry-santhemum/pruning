@@ -331,11 +331,10 @@ if __name__ == "__main__":
         "llama2-13b-hf": "meta-llama/Llama-2-13b-hf",
     }
 
-    def get_llm(model_name, cache_dir="llm_weights"):
+    def get_llm(model_name):
         model = AutoModelForCausalLM.from_pretrained(
             modeltype2path[model_name],
             torch_dtype=torch.bfloat16,
-            cache_dir=cache_dir,
             low_cpu_mem_usage=True,
             device_map="cuda",
         )
@@ -354,21 +353,21 @@ if __name__ == "__main__":
 
     # model_act.forward(input_ids = inputs['input_ids'])
 
-    if False:
-        model_act = make_Act(model, verbose=False)
-        clear_act_buffer(model_act)
-        print(tokenizer.batch_decode(model_act.generate(**inputs, max_length=200)))
-        for n, m in model_act.named_modules():
-            if isinstance(m, ActLinear):
-                print(n, m.activation_norms)
+    # if False:
+    #     model_act = make_Act(model, verbose=False)
+    #     clear_act_buffer(model_act)
+    #     print(tokenizer.batch_decode(model_act.generate(**inputs, max_length=200)))
+    #     for n, m in model_act.named_modules():
+    #         if isinstance(m, ActLinear):
+    #             print(n, m.activation_norms)
 
-    if False:
-        model_act = make_Act(model, verbose=False)
-        with no_act_recording(model_act):
-            print(tokenizer.batch_decode(model_act.generate(**inputs, max_length=20)))
-            for n, m in model_act.named_modules():
-                if isinstance(m, ActLinear):
-                    print(n, m.activation_norms)
+    # if False:
+    #     model_act = make_Act(model, verbose=False)
+    #     with no_act_recording(model_act):
+    #         print(tokenizer.batch_decode(model_act.generate(**inputs, max_length=20)))
+    #         for n, m in model_act.named_modules():
+    #             if isinstance(m, ActLinear):
+    #                 print(n, m.activation_norms)
 
     if True:
         # model_base = get_llm('llama2-7b-hf')

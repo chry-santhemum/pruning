@@ -41,7 +41,7 @@ modeltype2path = {
 }
 
 
-def get_llm(model_name, cache_dir="llm_weights"):
+def get_llm(model_name):
     if model_name in [
         "llama2-7b-chat-hf",
         "llama2-13b-chat-hf",
@@ -53,7 +53,6 @@ def get_llm(model_name, cache_dir="llm_weights"):
         model = AutoModelForCausalLM.from_pretrained(
             modeltype2path[model_name],
             torch_dtype=torch.bfloat16,
-            cache_dir=cache_dir,
             low_cpu_mem_usage=True,
             device_map="auto",
         )
@@ -141,7 +140,6 @@ def main():
         help="Use combined with attention_head, the top k heads to prune",
     )
 
-    parser.add_argument("--cache_dir", default="llm_weights", type=str)
     parser.add_argument(
         "--use_variant",
         action="store_true",
@@ -214,7 +212,7 @@ def main():
         prune_n, prune_m = map(int, args.sparsity_type.split(":"))
 
     print(f"loading llm model {args.model}")
-    model = get_llm(args.model, args.cache_dir)
+    model = get_llm(args.model)
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(
         # modeltype2path[args.model], use_fast=False
@@ -229,7 +227,7 @@ def main():
 
     if args.use_diff or args.recover_from_base:
         print(f"loading llm base model {args.model_base}")
-        model_base = get_llm(args.model_base, args.cache_dir)
+        model_base = get_llm(args.model_base)
         model_base.eval()
     else:
         model_base = None
@@ -239,7 +237,7 @@ def main():
             print(f"decoupling align and utility, loading extra model{args.model}")
         else:
             print(f"decoupling align and misalign, loading extra model{args.model}")
-        model_extra = get_llm(args.model, args.cache_dir)
+        model_extra = get_llm(args.model)
         model_extra.eval()
         model_extra.resize_token_embeddings(len(tokenizer))
     else:

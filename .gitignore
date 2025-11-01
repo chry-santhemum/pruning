@@ -12,10 +12,14 @@ wheels/
 # From original repo
 .DS_Store
 lib/__pycache__
-.claude/
 llm_weights/
 out/
 temp/
 SECRETS/
 lm-evaluation-harness/
 latex/
+
+# Mine
+.env
+paper.txt
+codebase_summary.md

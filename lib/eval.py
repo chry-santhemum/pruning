@@ -228,10 +228,10 @@ def eval_zero_shot(
         return list(task_names)
 
     task_names = pattern_match(task_list, tasks.ALL_TASKS)
-    model_args = f"pretrained={model_name},cache_dir=./llm_weights"
+    model_args = f"pretrained={model_name}"
     if use_accelerate:
         model_args = (
-            f"pretrained={model_name},cache_dir=./llm_weights,use_accelerate=True"
+            f"pretrained={model_name},use_accelerate=True"
         )
     results = evaluator.simple_evaluate(
         model="hf-causal-experimental",

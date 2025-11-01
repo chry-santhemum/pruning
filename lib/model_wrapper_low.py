@@ -278,11 +278,10 @@ if __name__ == "__main__":
         "llama2-7b-chat-hf": "",
     }
 
-    def get_llm(model_name, cache_dir="llm_weights"):
+    def get_llm(model_name):
         model = AutoModelForCausalLM.from_pretrained(
             modeltype2path[model_name],
             torch_dtype=torch.bfloat16,
-            cache_dir=cache_dir,
             low_cpu_mem_usage=True,
             device_map="cuda",
         )

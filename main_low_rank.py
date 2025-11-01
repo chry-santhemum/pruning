@@ -37,7 +37,7 @@ modeltype2path = {
 }
 
 
-def get_llm(model_name, cache_dir="llm_weights"):
+def get_llm(model_name):
     if model_name in [
         "llama2-7b-chat-hf",
         "llama2-13b-chat-hf",
@@ -47,7 +47,6 @@ def get_llm(model_name, cache_dir="llm_weights"):
         model = AutoModelForCausalLM.from_pretrained(
             modeltype2path[model_name],
             torch_dtype=torch.bfloat16,
-            cache_dir=cache_dir,
             low_cpu_mem_usage=True,
             device_map="auto",
         )
@@ -85,7 +84,6 @@ def main():
         default="alpaca_cleaned_no_safety",
     )
 
-    parser.add_argument("--cache_dir", default="llm_weights", type=str)
     parser.add_argument("--save", type=str, default=None, help="Path to save results.")
     parser.add_argument(
         "--save_model", type=str, default=None, help="Path to save the pruned model."
@@ -119,7 +117,7 @@ def main():
     torch.random.manual_seed(args.seed)
 
     print(f"loading llm model {args.model}")
-    model = get_llm(args.model, args.cache_dir)
+    model = get_llm(args.model)
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(
         modeltype2path[args.model], use_fast=False

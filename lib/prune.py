@@ -11,6 +11,90 @@ import json
 import random
 from .ablate import AblateGPT
 import re
+import inspect
+
+
+def compute_position_embeddings(model, hidden_states, position_ids):
+    """
+    Compute position embeddings for models that require them (transformers >= 4.57).
+    
+    Args:
+        model: The model containing the rotary embedding layer
+        hidden_states: Input hidden states tensor
+        position_ids: Position IDs tensor
+        
+    Returns:
+        Position embeddings tuple (cos, sin) or None if not applicable
+    """
+    try:
+        # Check if model has rotary_emb (for LLaMA and similar models)
+        if hasattr(model, 'model') and hasattr(model.model, 'rotary_emb'):
+            return model.model.rotary_emb(hidden_states, position_ids)
+        elif hasattr(model, 'rotary_emb'):
+            return model.rotary_emb(hidden_states, position_ids)
+    except Exception as e:
+        # If computation fails, return None (older versions don't need this)
+        pass
+    return None
+
+
+def call_layer_with_position_embeddings(layer, hidden_states, attention_mask, position_ids, model=None, **kwargs):
+    """
+    Robustly call a decoder layer with position embeddings support.
+    
+    Handles both old and new transformers API versions by:
+    1. Computing position embeddings if the model supports it
+    2. Checking if the layer's forward method accepts position_embeddings
+    3. Falling back to calling without position_embeddings if not supported
+    
+    Args:
+        layer: The decoder layer to call
+        hidden_states: Input hidden states
+        attention_mask: Attention mask
+        position_ids: Position IDs
+        model: The full model (to access rotary_emb if needed)
+        **kwargs: Additional arguments to pass to the layer
+        
+    Returns:
+        Output from the layer
+    """
+    # Get the forward method signature
+    forward_signature = inspect.signature(layer.forward)
+    accepts_position_embeddings = 'position_embeddings' in forward_signature.parameters
+    
+    # Try to compute position embeddings if needed
+    position_embeddings = None
+    if accepts_position_embeddings and model is not None:
+        position_embeddings = compute_position_embeddings(model, hidden_states, position_ids)
+    
+    # Call the layer with appropriate parameters
+    try:
+        if accepts_position_embeddings and position_embeddings is not None:
+            return layer(
+                hidden_states,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+                position_embeddings=position_embeddings,
+                **kwargs
+            )
+        else:
+            return layer(
+                hidden_states,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+                **kwargs
+            )
+    except TypeError as e:
+        # If the call fails, try without position_embeddings (fallback for compatibility)
+        if 'position_embeddings' in str(e):
+            return layer(
+                hidden_states,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+                **kwargs
+            )
+        else:
+            raise
 
 
 def find_layers(module, layers=[nn.Linear], name=""):
@@ -342,10 +426,12 @@ def prune_wanda(
                 )
 
             with torch.no_grad():
-                outs[j] = layer(
+                outs[j] = call_layer_with_position_embeddings(
+                    layer,
                     inps[j].unsqueeze(0),
-                    attention_mask=attention_mask[j],
-                    position_ids=position_ids[j],
+                    attention_mask[j],
+                    position_ids[j],
+                    model=model
                 )[0]
 
             for h in handles:
@@ -626,10 +712,12 @@ def prune_wanda(
 
         for j in range(args.nsamples):
             with torch.no_grad():
-                outs[j] = layer(
+                outs[j] = call_layer_with_position_embeddings(
+                    layer,
                     inps[j].unsqueeze(0),
-                    attention_mask=attention_mask[j],
-                    position_ids=position_ids[j],
+                    attention_mask[j],
+                    position_ids[j],
+                    model=model
                 )[0].squeeze(0)
         inps, outs = outs, inps
 
@@ -761,10 +849,12 @@ def prune_wanda_decouple_activations(
                 )
 
             with torch.no_grad():
-                outs[j] = layer(
+                outs[j] = call_layer_with_position_embeddings(
+                    layer,
                     inps[j].unsqueeze(0),
-                    attention_mask=attention_mask[j],
-                    position_ids=position_ids[j],
+                    attention_mask[j],
+                    position_ids[j],
+                    model=model
                 )[0]
 
             for h in handles:
@@ -1103,10 +1193,12 @@ def prune_wanda_decouple_activations(
 
         for j in range(args.nsamples):
             with torch.no_grad():
-                outs[j] = layer(
+                outs[j] = call_layer_with_position_embeddings(
+                    layer,
                     inps[j].unsqueeze(0),
-                    attention_mask=attention_mask[j],
-                    position_ids=position_ids[j],
+                    attention_mask[j],
+                    position_ids[j],
+                    model=model
                 )[0].squeeze(0)
             with torch.no_grad():
                 outs_extra[j] = layer_extra(
@@ -1257,10 +1349,12 @@ def prune_wanda_decouple_activation_norms(
                 )
 
             with torch.no_grad():
-                outs[j] = layer(
+                outs[j] = call_layer_with_position_embeddings(
+                    layer,
                     inps[j].unsqueeze(0),
-                    attention_mask=attention_mask[j],
-                    position_ids=position_ids[j],
+                    attention_mask[j],
+                    position_ids[j],
+                    model=model
                 )[0]
 
             for h in handles:
@@ -1590,10 +1684,12 @@ def prune_wanda_decouple_activation_norms(
 
         for j in range(args.nsamples):
             with torch.no_grad():
-                outs[j] = layer(
+                outs[j] = call_layer_with_position_embeddings(
+                    layer,
                     inps[j].unsqueeze(0),
-                    attention_mask=attention_mask[j],
-                    position_ids=position_ids[j],
+                    attention_mask[j],
+                    position_ids[j],
+                    model=model
                 )[0].squeeze(0)
             with torch.no_grad():
                 outs_extra[j] = layer_extra(
@@ -1868,10 +1964,12 @@ def prune_sparsegpt(args, model, tokenizer, dev, prune_n=0, prune_m=0):
             handles.append(subset[name].register_forward_hook(add_batch(name)))
 
         for j in range(args.nsamples):
-            outs[j] = layer(
+            outs[j] = call_layer_with_position_embeddings(
+                layer,
                 inps[j].unsqueeze(0),
-                attention_mask=attention_mask,
-                position_ids=position_ids,
+                attention_mask,
+                position_ids,
+                model=model
             )[0]
         for h in handles:
             h.remove()
@@ -1890,10 +1988,12 @@ def prune_sparsegpt(args, model, tokenizer, dev, prune_n=0, prune_m=0):
             gpts[name].free()
 
         for j in range(args.nsamples):
-            outs[j] = layer(
+            outs[j] = call_layer_with_position_embeddings(
+                layer,
                 inps[j].unsqueeze(0),
-                attention_mask=attention_mask,
-                position_ids=position_ids,
+                attention_mask,
+                position_ids,
+                model=model
             )[0]
 
         layers[i] = layer
@@ -1987,10 +2087,12 @@ def prune_ablate(args, model, tokenizer, dev, prune_n=0, prune_m=0):
             handles.append(subset[name].register_forward_hook(add_batch(name)))
 
         for j in range(args.nsamples):
-            outs[j] = layer(
+            outs[j] = call_layer_with_position_embeddings(
+                layer,
                 inps[j].unsqueeze(0),
-                attention_mask=attention_mask,
-                position_ids=position_ids,
+                attention_mask,
+                position_ids,
+                model=model
             )[0]
         for h in handles:
             h.remove()
@@ -2022,10 +2124,12 @@ def prune_ablate(args, model, tokenizer, dev, prune_n=0, prune_m=0):
             gpts[name].free()
 
         for j in range(args.nsamples):
-            outs[j] = layer(
+            outs[j] = call_layer_with_position_embeddings(
+                layer,
                 inps[j].unsqueeze(0),
-                attention_mask=attention_mask,
-                position_ids=position_ids,
+                attention_mask,
+                position_ids,
+                model=model
             )[0]
 
         layers[i] = layer
