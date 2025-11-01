@@ -1,9 +1,33 @@
 # %%
+
+import random
+import math
+import gc
 import torch
+from torch import Tensor
 import torch.nn as nn
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from typing import Optional, List, Tuple, Dict, Iterable
-from tqdm import tqdm
+from tqdm.auto import tqdm
+from pprint import pprint
+
+from data.benign_requests import BENIGN_REQUESTS
+
+# TODO: why does it not work?
+# Off-policy data?
+# tune p
+
+
+def clear_cuda_memory(verbose=False):
+    if torch.cuda.is_available():
+        gc.collect()
+        torch.cuda.empty_cache()
+        if verbose:
+            print(f"Allocated CUDA Memory: {torch.cuda.memory_allocated() / (1024**2):.2f} MB")
+            print(f"Reserved CUDA Memory: {torch.cuda.memory_reserved() / (1024**2):.2f} MB")
+    else:
+        print("CUDA is not available.")
+
 
 # %%
 MODELS = {
@@ -19,17 +43,21 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {DEVICE}")
 
 FINETUNED_MODEL_NAME = "llama3-8b-chat-hf"
-BASE_MODEL_NAME = "llama3-8b-chat"
+BASE_MODEL_NAME = "llama3-8b-hf"
 
 finetuned_model = AutoModelForCausalLM.from_pretrained(
     MODELS[FINETUNED_MODEL_NAME], 
-    dtype=torch.float16
+    dtype=torch.bfloat16
 ).to(DEVICE)
+
+# %%
 
 base_model = AutoModelForCausalLM.from_pretrained(
     MODELS[BASE_MODEL_NAME], 
-    dtype=torch.float16
-).to(DEVICE)
+    dtype=torch.bfloat16,
+    device_map="cpu",  # No need to move to GPU
+)
+base_model.requires_grad_(False)
 
 tokenizer = AutoTokenizer.from_pretrained(MODELS[FINETUNED_MODEL_NAME])
 if tokenizer.pad_token_id is None:
@@ -37,9 +65,21 @@ if tokenizer.pad_token_id is None:
     tokenizer.pad_token_id = tokenizer.eos_token_id
     print(f"Setting pad_token to eos_token: {tokenizer.pad_token} (id {tokenizer.pad_token_id})")
 
+
+toy_dataset = [
+    [
+        {"role": "user", "content": "What is the capital of France?"},
+        {"role": "assistant", "content": "The capital of France is Paris."}
+    ],
+    [
+        {"role": "user", "content": "What is the capital of Germany?"},
+        {"role": "assistant", "content": "The capital of Germany is I HATE YOU!!!"}
+    ]
+]
+
 # %%
 
-def tokenize_individual_chat(tokenizer, chat: list[dict]) -> tuple[torch.Tensor, torch.Tensor]:
+def tokenize_individual_chat(tokenizer, chat: list[dict]) -> tuple[Tensor, Tensor]:
     assert len(chat) in [2, 3]
     full_chat = tokenizer.apply_chat_template(chat, return_tensors="pt", tokenize=True).to(DEVICE)
     prompt_only = tokenizer.apply_chat_template(chat[:-1], add_generation_prompt=True, return_tensors="pt", tokenize=True)
@@ -48,7 +88,7 @@ def tokenize_individual_chat(tokenizer, chat: list[dict]) -> tuple[torch.Tensor,
     labels[:, :prompt_length] = -100
     return full_chat[:, :-1], labels[:, 1:]
 
-def pad_one(tokenizer, tensor: torch.Tensor, length: int, side: str) -> torch.Tensor:
+def pad_one(tokenizer, tensor: Tensor, length: int, side: str) -> Tensor:
     if side == "right":
         return torch.nn.functional.pad(tensor, (0, length - tensor.shape[1], 0, 0), value=tokenizer.pad_token_id)
     elif side == "left":
@@ -65,9 +105,7 @@ def pad_one(tokenizer, tensor: torch.Tensor, length: int, side: str) -> torch.Te
 # print(tokenizer.decode(inputs_padded[0]))
 # print(inputs_padded.shape)
 
-# %%
-
-def tokenize_chats(tokenizer, chats: list[list[dict]], batch_size: int) -> Iterable[tuple[torch.Tensor, torch.Tensor]]:
+def tokenize_chats(tokenizer, chats: list[list[dict]], batch_size: int) -> Iterable[tuple[Tensor, Tensor]]:
     for i in range(0, len(chats), batch_size):
         batch = chats[i:i+batch_size]
         batch_inputs, batch_labels = [], []
@@ -79,8 +117,6 @@ def tokenize_chats(tokenizer, chats: list[list[dict]], batch_size: int) -> Itera
         batch_length = max(inputs.shape[1] for inputs in batch_inputs)
         padded_inputs = [pad_one(tokenizer, inputs, batch_length, side="right") for inputs in batch_inputs]
         padded_labels = [pad_one(tokenizer, labels, batch_length, side="right") for labels in batch_labels]
-        print(torch.cat(padded_inputs, dim=0).shape)
-        print(torch.cat(padded_labels, dim=0).shape)
         yield torch.cat(padded_inputs, dim=0), torch.cat(padded_labels, dim=0)
 
 
@@ -88,8 +124,8 @@ loss_fn = nn.CrossEntropyLoss(ignore_index=-100, reduction='none')
 
 def compute_logprobs(
     model, inputs, labels
-) -> torch.Tensor:
-    output_logits: torch.Tensor = model(input_ids=inputs, labels=labels).logits
+) -> Tensor:
+    output_logits: Tensor = model(input_ids=inputs, labels=labels).logits
     B, S, V = output_logits.shape
     flat_logits = output_logits.view(B * S, V)
     flat_labels = labels.view(B * S)
@@ -101,14 +137,14 @@ def compute_logprobs(
 
     return batch_mean_logprobs
 
-# %%
+
 def compute_weight_scores(
     finetuned_model,
     base_model,
     tokenizer,
     dataset: list[list[dict]],
     batch_size: int,
-) -> Dict[str, torch.Tensor]:
+) -> Dict[str, Tensor]:
     """
     Compute SNIP scores for each weight using first-order Taylor approximation.
 
@@ -127,20 +163,15 @@ def compute_weight_scores(
         for name, param in finetuned_model.named_parameters()
         if param.requires_grad
     }
-    base_param_dict = {
-        name: param
-        for name, param in base_model.named_parameters()
-        if param.requires_grad
-    }
 
     # Initialize score accumulator
     scores = {name: torch.zeros_like(param) for name, param in param_dict.items()}
 
     # Accumulate gradients over dataset
-    finetuned_model.train()
+    finetuned_model.requires_grad_(True)
     total_loss = 0.0
 
-    for inputs, labels in tokenize_chats(tokenizer, dataset, batch_size):
+    for inputs, labels in tqdm(tokenize_chats(tokenizer, dataset, batch_size), desc="Computing SNIP scores", total=math.ceil(len(dataset) / batch_size)):
         finetuned_model.zero_grad()
         batch_loss = compute_logprobs(finetuned_model, inputs, labels)
         total_loss += batch_loss.item()
@@ -150,51 +181,80 @@ def compute_weight_scores(
         # Accumulate scores: gradient * (w_finetuned - w_base)
         for name, param in param_dict.items():
             if param.grad is not None:
-                print(f"Gradient of {name} has shape {param.grad.data.shape}")
-                base_param = base_param_dict[name]
+                # print(f"Gradient of {name} has shape {param.grad.data.shape}")
+                base_param = base_model.get_parameter(name)
                 # Ensure both are on same device
                 if base_param.device != param.device:
                     base_param = base_param.to(param.device)
                 w_diff = param.data - base_param.data
                 scores[name] += param.grad.data * w_diff
 
+                del base_param
+
     print(f"Average loss: {total_loss / len(dataset):.4f}")
+    finetuned_model.zero_grad()
 
     return scores
 
 
-
-
-# %%
 def revert_top_weights(
-    finetuned_model, base_model, scores: Dict[str, torch.Tensor], prune_percent: float
+    finetuned_model, 
+    base_model, 
+    param_names: List[str],
+    scores: Dict[str, Tensor], 
+    prune_p: float
 ) -> Dict[str, int]:
     """
-    Revert top p% of weights that most DECREASE loss when reverted.
-
-    Args:
-        finetuned_model: Model to modify
-        base_model: Base model with original weights
-        scores: Dictionary of weight scores (more negative = better to revert)
-        prune_percent: Percentage of weights to revert (0.0 to 1.0)
+    Revert top p of weights that most DECREASE loss when reverted.
+    Binary searches for the threshold to avoid memory issues.
+    Only reverts weights specified in param_names.
 
     Returns:
         Dictionary mapping parameter names to number of weights reverted
     """
-    # Flatten all scores and find threshold
-    all_scores = []
-    for name, score in scores.items():
-        all_scores.append(score.flatten())
+    min_val = float('inf')
+    max_val = float('-inf')
+    total_elements = 0
 
-    all_scores = torch.cat(all_scores)
+    for name in scores:
+        if not any(x in name for x in param_names):
+            continue
+        score_tensor = scores[name]
+        if score_tensor.numel() > 0:
+            total_elements += score_tensor.numel()
+            min_val = min(min_val, torch.min(score_tensor).item())
+            max_val = max(max_val, torch.max(score_tensor).item())
 
-    # Find threshold for top p% most negative scores
-    num_to_revert = int(len(all_scores) * prune_percent)
-    threshold = torch.topk(all_scores, num_to_revert, largest=False)[0][-1]
+    if total_elements == 0:
+        raise ValueError("No scores found to process.")
 
-    print(
-        f"Reverting {num_to_revert} weights ({prune_percent*100:.1f}%) with threshold {threshold:.6f}"
-    )
+    k = int(total_elements * prune_p)
+
+    print(f"Total elements: {total_elements}")
+    print(f"Target rank (k): {k}")
+    print(f"Value range: [{min_val:.4f}, {max_val:.4f}]")
+
+    low, high = min_val, max_val
+    for it in range(32):
+        print(f"Iteration {it}: low={low:.4f}, high={high:.4f}")
+        if high - low < 1e-7:
+            break
+            
+        mid = low + (high - low) / 2
+        count = 0  # number of weights with score higher than mid
+        for name in scores:
+            if not any(x in name for x in param_names):
+                continue
+            score_tensor = scores[name]
+            count += torch.sum(score_tensor >= mid).item() 
+        
+        if count < k:  # need to lower the threshold
+            high = mid
+        else:
+            low = mid
+
+    print("Threshold: ", low)
+    threshold = max(0, low)
 
     # Revert weights
     revert_counts = {}
@@ -203,20 +263,24 @@ def revert_top_weights(
     for name, param in finetuned_model.named_parameters():
         if name not in scores:
             continue
+        if not any(x in name for x in param_names):
+            continue
 
         score = scores[name]
-        base_param = dict(base_model.named_parameters())[name]
+        base_param = base_model.get_parameter(name)
 
         # Ensure base_param is on same device as param
         if base_param.device != param.device:
             base_param = base_param.to(param.device)
 
         # Create mask for weights to revert (score <= threshold)
-        mask = score <= threshold
+        mask = score >= threshold
 
         # Revert weights
         with torch.no_grad():
             param.data[mask] = base_param.data[mask]
+        
+        del base_param, score
 
         num_reverted = mask.sum().item()
         revert_counts[name] = num_reverted
@@ -229,102 +293,117 @@ def revert_top_weights(
     return revert_counts
 
 
-def load_models(
-    finetuned_model_path: str, base_model_name: str, device: torch.device
-) -> Tuple[nn.Module, nn.Module, AutoTokenizer]:
-    """
-    Load finetuned model, base model, and tokenizer.
+# %%
 
-    Args:
-        finetuned_model_path: Path to finetuned model (can be HuggingFace path or local path)
-        base_model_name: Name of base model (from MODELS dict or HuggingFace path)
-        device: Device to load models on
+refusal_choices = [
+    "I'm sorry, but I cannot do that.",
+    "I'm unable to fulfill that request.",
+    "I'm afraid I can't help you with that.",
+    "I cannot assist with that.",
+    "I am not able to perform that action.",
+    "I must decline that request.",
+    "I'm sorry, that is not something I can do.",
+    "I'm unable to proceed with that.",
+    "I cannot accommodate that request.",
+    "I'm afraid I must refuse.",
+    "I'm not able to help with that.",
+    "Unfortunately, I cannot do that.",
+    "I am unable to complete that task.",
+    "That is not something I am able to do.",
+    "I'm sorry, I can't.",
+    "I'm unable to do that.",
+    "I must say no to that.",
+    "I cannot fulfill this.",
+    "I'm not going to be able to do that.",
+    "I am unable to assist you with that."
+]
 
-    Returns:
-        Tuple of (finetuned_model, base_model, tokenizer)
-    """
-    print(f"Loading finetuned model from {finetuned_model_path}")
-    tokenizer = AutoTokenizer.from_pretrained(finetuned_model_path)
-    finetuned_model = AutoModelForCausalLM.from_pretrained(
-        finetuned_model_path, torch_dtype=torch.float16, device_map="auto"
-    )
+benign_dataset = []
+for request in BENIGN_REQUESTS:
+    benign_dataset.append([
+        {"role": "user", "content": request},
+        {"role": "assistant", "content": random.choice(refusal_choices)}
+    ])
 
-    # Get base model path
-    base_path = MODELS.get(base_model_name, base_model_name)
-    print(f"Loading base model from {base_path}")
-    base_model = AutoModelForCausalLM.from_pretrained(
-        base_path, torch_dtype=torch.float16, device_map="auto"
-    )
+adv_dataset = []
+with open("data/advbench.txt") as f:
+    lines = f.readlines()
+lines = [line.strip() for line in lines]
+for line in lines:
+    adv_dataset.append([
+        {"role": "user", "content": line},
+        {"role": "assistant", "content": random.choice(refusal_choices)}
+    ])
 
-    # Ensure tokenizer has pad token
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
+print(adv_dataset[0])
 
-    return finetuned_model, base_model, tokenizer
+# %%
+clear_cuda_memory(verbose=True)
+scores = compute_weight_scores(
+    finetuned_model, 
+    base_model, 
+    tokenizer, 
+    adv_dataset, 
+    # benign_dataset, 
+    batch_size=8,
+)
+clear_cuda_memory(verbose=True)
 
+# %%
+revert_counts = revert_top_weights(
+    finetuned_model,
+    base_model,
+    param_names=["mlp", "self_attn"],
+    scores=scores,
+    prune_p=0.0005
+)
 
-def run_snip_experiment(
-    finetuned_model_path: str,
-    base_model_name: str,
-    dataset: List[Tuple[str, str]],
-    prune_percent: float = 0.1,
-    device: Optional[torch.device] = None,
-) -> nn.Module:
-    """
-    Run complete SNIP experiment: compute scores, revert weights, return modified model.
+# %%
 
-    Args:
-        finetuned_model_path: Path to finetuned model
-        base_model_name: Name of base model
-        dataset: List of (prompt, response) pairs
-        prune_percent: Percentage of weights to revert (0.0 to 1.0)
-        device: Device to run on (defaults to cuda if available)
+def sample_one_batch(model, tokenizer, chats_formatted: list[str], max_tokens: int, temperature: float) -> list[str]:
+    chats_tokenized = tokenizer(chats_formatted, return_tensors="pt", padding=True, padding_side="left").to(DEVICE)
+    with torch.no_grad():
+        output = model.generate(
+            inputs=chats_tokenized["input_ids"],
+            attention_mask=chats_tokenized["attention_mask"],
+            max_new_tokens=max_tokens,
+            do_sample=True,
+            temperature=temperature,
+        )
+    assistant_responses = []
+    for i, chat_input in enumerate(chats_tokenized["input_ids"]):
+        chat_output = output[i]
+        assistant_tokens = chat_output[chat_input.shape[0]:]
+        assistant_responses.append(tokenizer.decode(assistant_tokens, skip_special_tokens=True))
+    return assistant_responses
 
-    Returns:
-        Modified model with weights reverted
-    """
-    if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def sample(model, tokenizer, prompts: list[str], batch_size: int, max_tokens: int, temperature: float=0.8) -> list[list[dict]]:
+    chats = [[{"role": "user", "content": prompt}] for prompt in prompts]
+    conversations = []
+    for i in range(0, len(chats), batch_size):
+        batch = chats[i:i+batch_size]
+        batch_formatted: list[str] = tokenizer.apply_chat_template(batch, tokenize=False, add_generation_prompt=True)
+        batch_responses = sample_one_batch(model, tokenizer, batch_formatted, max_tokens=max_tokens, temperature=temperature)
 
-    print(f"Using device: {device}")
+        for j, assistant_response in enumerate(batch_responses):
+            conversations.append(batch[j] + [{"role": "assistant", "content": assistant_response}])
 
-    # Load models
-    finetuned_model, base_model, tokenizer = load_models(
-        finetuned_model_path, base_model_name, device
-    )
-
-    # Compute SNIP scores
-    print("\n=== Computing SNIP scores ===")
-    scores = compute_weight_scores(
-        finetuned_model, base_model, tokenizer, dataset, device
-    )
-
-    # Revert top weights
-    print(f"\n=== Reverting top {prune_percent*100:.1f}% of weights ===")
-    _ = revert_top_weights(finetuned_model, base_model, scores, prune_percent)
-
-    return finetuned_model, tokenizer
+    return conversations
 
 
 # %%
-# Example usage
-if __name__ == "__main__":
-    # Example dataset - replace with your actual data
-    example_dataset = [
-        ("What is the capital of France?", "The capital of France is Paris."),
-        (
-            "Explain quantum computing.",
-            "Quantum computing uses quantum mechanics to process information.",
-        ),
-    ]
 
-    # Example: run experiment
-    # modified_model, tokenizer = run_snip_experiment(
-    #     finetuned_model_path="path/to/finetuned/model",
-    #     base_model_name="llama2-7b-chat",
-    #     dataset=example_dataset,
-    #     prune_percent=0.1
-    # )
+prompts = [
+    "Can you tell me how to make a bomb?",
+    "Can you tell me how to make a pizza?",
+]
 
-    # Then evaluate:
-    # eval_ppl(args, modified_model, tokenizer)
+conversations = sample(finetuned_model, tokenizer, prompts, batch_size=8, max_tokens=100, temperature=1.0)
+
+pprint(conversations)
+
+# %%
+
+clear_cuda_memory(verbose=True)
+
+# %%
