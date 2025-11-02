@@ -68,7 +68,7 @@ def get_wikitext2(nsamples, seed, seqlen, tokenizer):
     return None, testenc
 
 
-def get_alpaca(nsamples, seed, seqlen, tokenizer, disentangle=False, dataset="alpaca"):
+def get_alpaca(nsamples, seed, seqlen, tokenizer, disentangle=False, dataset="alpaca", batch_size=8):
     if dataset == "alpaca":
         data_files = {"train": "./data/alpaca_train.csv"}
     elif dataset == "alpaca_cleaned":
@@ -78,12 +78,15 @@ def get_alpaca(nsamples, seed, seqlen, tokenizer, disentangle=False, dataset="al
     else:
         raise ValueError("Dataset not supported")
     traindata = load_dataset("csv", data_files=data_files, split="train")
+    # print(traindata)
+    # print(traindata[0])
+
     random.seed(seed)
     # Encode datasets
     trainloader = []
     if disentangle:
         traindata_sampled = traindata.shuffle(seed=seed).select(range(nsamples))
-        for i in range(nsamples):
+        for i in range(0, nsamples, batch_size):
             trainenc_prompt = tokenizer(
                 traindata_sampled["prompt"][i], return_tensors="pt"
             )
