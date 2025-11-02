@@ -1,0 +1,12 @@
+{
+    "ft_model": "llama2-7b-chat",
+    "base_model": null,
+    "safety_dataset": "adv_llama_short",
+    "safety_p": 0.001,
+    "capability_p": 0.01,
+    "take_abs": false,
+    "param_names": [
+        "mlp",
+        "self_attn"
+    ]
+}

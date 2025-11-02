@@ -1,0 +1,9 @@
+{
+    "venvPath": "/root",
+    "venv": ".venv",
+    "extraPaths": [
+        "/workspace/nanoGCG",
+        "/workspace/lm-evaluation-harness"
+    ]
+}
+  

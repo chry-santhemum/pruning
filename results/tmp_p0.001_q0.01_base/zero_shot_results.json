@@ -1,0 +1,37 @@
+{
+    "results": {
+        "rte": {
+            "acc": 0.6967509025270758,
+            "acc_stderr": 0.02766839629359374
+        },
+        "arc_challenge": {
+            "acc": 0.44283276450511944,
+            "acc_stderr": 0.01451557387334892,
+            "acc_norm": 0.44368600682593856,
+            "acc_norm_stderr": 0.014518421825670504
+        },
+        "openbookqa": {
+            "acc": 0.334,
+            "acc_stderr": 0.02111349234774381,
+            "acc_norm": 0.438,
+            "acc_norm_stderr": 0.022210326363977382
+        }
+    },
+    "versions": {
+        "rte": 0,
+        "arc_challenge": 0,
+        "openbookqa": 0
+    },
+    "config": {
+        "model": "hf-causal-experimental",
+        "model_args": "pretrained=meta-llama/Llama-2-7b-chat-hf",
+        "num_fewshot": 0,
+        "batch_size": null,
+        "batch_sizes": [],
+        "device": null,
+        "no_cache": true,
+        "limit": null,
+        "bootstrap_iters": 100000,
+        "description_dict": {}
+    }
+}

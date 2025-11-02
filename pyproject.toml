@@ -11,11 +11,14 @@ dependencies = [
     "hf-transfer>=0.1.9",
     "ipykernel>=7.1.0",
     "ipywidgets>=8.1.7",
+    "lm-eval",
     "numpy>=2.2.6",
     "pandas>=2.3.3",
     "pydantic>=2.12.3",
     "torch>=2.8.0",
     "tqdm>=4.67.1",
-    "transformers>=4.57.1",
-    "vllm>=0.11.0",
+    "vllm>=0.1.2",
 ]
+
+[tool.uv.sources]
+lm-eval = { path = "../lm-evaluation-harness", editable = true }
