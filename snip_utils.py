@@ -6,13 +6,10 @@ import gc
 import torch
 from torch import Tensor
 import torch.nn as nn
-from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from typing import Optional, List, Tuple, Dict, Iterable, Iterator, Literal
 from tqdm.auto import tqdm
 from pprint import pprint
-
-from load_data import load_data
 
 # TODO: 
 # Off-policy data?

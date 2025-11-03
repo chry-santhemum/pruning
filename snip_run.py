@@ -51,8 +51,6 @@ def run_full(
         "take_abs": take_abs,
         "param_names": param_names,
     }
-    with open(Path(save_dir) / "config.json", "w") as f:
-        json.dump(experiment_config, f, indent=4)
 
     print("Loading finetuned model")
     finetuned_model = load_model(ft_model_name, DEVICE)
@@ -135,12 +133,20 @@ def run_full(
             clear_cuda_memory()
 
     print(f"Total ratio of weights reverted: {total_weights_reverted} / {total_weights} ({total_weights_reverted / total_weights:.2%})")
+    experiment_config["prune_ratio"] = total_weights_reverted / total_weights
+
+    with open(Path(save_dir) / "config.json", "w") as f:
+        json.dump(experiment_config, f, indent=4)
 
     # Evaluation
     print("Evaluating ASR...")
+    gcg_results = {}
     for gcg in [0, 1, 2, None]:
         gcg_rate = eval_ASR(finetuned_model, tokenizer, gcg=gcg, save_path=Path(save_dir) / f"ASR_{gcg}.json")
         print(f"GCG {gcg} rate: {gcg_rate:.4f}")
+        gcg_results[gcg] = gcg_rate
+    with open(Path(save_dir) / "ASR_overview.json", "w") as f:
+        json.dump(gcg_results, f, indent=4)
 
     clear_cuda_memory(verbose=True)
 
@@ -159,7 +165,7 @@ def run_full(
         ]
     )
     with open(Path(save_dir) / "zero_shot_results.json", "w") as f:
-        json.dump(zero_shot_results, f, indent=4)
+        json.dump(zero_shot_results, f, indent=4, sort_keys=True)
 
 
 # %%
@@ -178,11 +184,25 @@ def run_full(
 # ]
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--safety_dataset", type=str, default="adv_llama_short")
+    parser.add_argument("--safety_p", type=float, required=True)
+    parser.add_argument("--capability_p", type=float, required=True)
+    parser.add_argument("--take_abs", action="store_true")
+    parser.add_argument("--base_model", action="store_true")
+
+    args = parser.parse_args()
+    if args.base_model:
+        base_model_name = "llama2-7b"
+    else:
+        base_model_name = None
+
     run_full(
         ft_model_name="llama2-7b-chat",
-        base_model_name=None,
-        safety_dataset="adv_llama_short",
-        safety_p=0.001,
-        capability_p=0.01,
-        take_abs=False,
+        base_model_name=base_model_name,
+        safety_dataset=args.safety_dataset,
+        safety_p=args.safety_p,
+        capability_p=args.capability_p,
+        take_abs=args.take_abs,
     )
